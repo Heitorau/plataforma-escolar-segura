@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Plataforma Escolar Segura</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="admin">
+  <header class="topbar">
+    <div class="brand"><span class="logo">⚙️</span><strong>Área do Coordenador</strong></div>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section id="loginBox" class="auth-card">
+      <p class="tag">Acesso fictício para protótipo</p>
+      <h1>Entrar no painel</h1>
+      <label>Usuário fictício<input id="loginUser" autocomplete="username" placeholder="coord_demo"></label>
+      <label>Senha fictícia<input id="loginPass" type="password" autocomplete="current-password" placeholder="Demo@12345"></label>
+      <button id="loginBtn" class="btn primary full">Entrar</button>
+      <p class="muted">Após executar <code>setup()</code> no Apps Script, use: <b>coord_demo</b> / <b>Demo@12345</b>.</p>
+    </section>
+
+    <section id="adminPanel" class="hidden">
+      <div class="page-head">
+        <div>
+          <p class="tag" id="sessionInfo">Sessão segura</p>
+          <h1>Cadastros e registros fictícios</h1>
+        </div>
+        <button id="logoutBtn" class="btn">Sair</button>
+      </div>
+
+      <section class="grid two">
+        <form id="classForm" class="panel">
+          <h2>Cadastrar turma</h2>
+          <label>Segmento<input name="segmento" required maxlength="40" placeholder="Fundamental II"></label>
+          <label>Série<input name="serie" required maxlength="40" placeholder="8º Ano"></label>
+          <label>Turma<input name="turma" required maxlength="20" placeholder="A"></label>
+          <button class="btn primary">Salvar turma</button>
+        </form>
+
+        <form id="userForm" class="panel">
+          <h2>Cadastrar usuário fictício</h2>
+          <label>Usuário<input name="username" required minlength="3" maxlength="30" placeholder="prof_demo"></label>
+          <label>Nome exibido<input name="display_name" required maxlength="60" placeholder="Professor Fictício"></label>
+          <label>Perfil
+            <select name="role" required>
+              <option value="coordenador">Coordenador</option>
+              <option value="professor">Professor</option>
+              <option value="visualizador">Visualizador</option>
+            </select>
+          </label>
+          <label>Senha fictícia<input name="password" type="password" required minlength="8" placeholder="Somente fictícia"></label>
+          <button class="btn primary">Salvar usuário</button>
+        </form>
+      </section>
+
+      <section class="grid two">
+        <form id="lookupForm" class="panel">
+          <h2>Cadastrar categoria/status/nível</h2>
+          <label>Tipo
+            <select name="tipo" required>
+              <option value="categoria_suporte">Categoria de suporte</option>
+              <option value="nivel_suporte">Nível de suporte</option>
+              <option value="status_acompanhamento">Status</option>
+            </select>
+          </label>
+          <label>Valor<input name="valor" required maxlength="50" placeholder="Outro"></label>
+          <button class="btn primary">Salvar opção</button>
+        </form>
+
+        <div class="panel">
+          <h2>Ações do sistema</h2>
+          <button id="refreshCacheBtn" class="btn primary full">Atualizar cache público</button>
+          <button id="reloadRecordsBtn" class="btn full">Recarregar registros</button>
+          <p class="muted">O cache público só contém dados agregados para o dashboard.</p>
+        </div>
+      </section>
+
+      <form id="recordForm" class="panel">
+        <h2>Novo registro fictício de acompanhamento</h2>
+        <div class="form-grid">
+          <label>Segmento<input name="segmento" required maxlength="40"></label>
+          <label>Série<input name="serie" required maxlength="40"></label>
+          <label>Turma<input name="turma" required maxlength="20"></label>
+          <label>Categoria
+            <select name="categoria_suporte" required>
+              <option>Atenção</option><option>Comunicação</option><option>Aprendizagem</option>
+              <option>Mobilidade</option><option>Comportamento</option><option>Altas habilidades</option><option>Outro</option>
+            </select>
+          </label>
+          <label>Nível
+            <select name="nivel_suporte" required><option>Baixo</option><option>Médio</option><option>Alto</option></select>
+          </label>
+          <label>Status
+            <select name="status_acompanhamento" required><option>Em análise</option><option>Ativo</option><option>Revisar</option><option>Encerrado</option></select>
+          </label>
+          <label>Auxiliar?<select name="necessita_auxiliar"><option>Não</option><option>Sim</option></select></label>
+          <label>Prova adaptada?<select name="necessita_prova_adaptada"><option>Não</option><option>Sim</option></select></label>
+          <label>Adaptação curricular?<select name="necessita_adaptacao_curricular"><option>Não</option><option>Sim</option></select></label>
+          <label>Adaptação mecânica?<select name="necessita_adaptacao_mecanica"><option>Não</option><option>Sim</option></select></label>
+          <label>Documentação?<select name="possui_documentacao"><option>Não</option><option>Sim</option></select></label>
+        </div>
+        <button class="btn primary">Salvar registro fictício</button>
+      </form>
+
+      <section class="panel">
+        <div class="page-head compact">
+          <h2>Listagem com filtros</h2>
+          <div class="filters">
+            <input id="filterSegmento" placeholder="Filtrar segmento">
+            <input id="filterSerie" placeholder="Filtrar série">
+            <input id="filterTurma" placeholder="Filtrar turma">
+            <select id="filterStatus"><option value="">Todos os status</option><option>Em análise</option><option>Ativo</option><option>Revisar</option><option>Encerrado</option></select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Segmento</th><th>Série</th><th>Turma</th><th>Categoria</th><th>Nível</th><th>Status</th><th>Ações</th></tr>
+            </thead>
+            <tbody id="recordRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

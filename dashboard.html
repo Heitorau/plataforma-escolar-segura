@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard Seguro</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="dashboard">
+  <header class="topbar">
+    <div class="brand"><span class="logo">📊</span><strong>Dashboard Seguro</strong></div>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <div class="page-head">
+      <div>
+        <p class="tag">Somente dados agregados</p>
+        <h1>Indicadores públicos</h1>
+      </div>
+      <button class="btn primary" id="refreshDashboardBtn">Atualizar dados</button>
+    </div>
+
+    <section class="kpis">
+      <div class="kpi"><span>Total ativo</span><strong id="kpiTotal">0</strong></div>
+      <div class="kpi"><span>Segmentos</span><strong id="kpiSegmentos">0</strong></div>
+      <div class="kpi"><span>Turmas</span><strong id="kpiTurmas">0</strong></div>
+      <div class="kpi"><span>Atualizado em</span><strong id="kpiUpdated">--</strong></div>
+    </section>
+
+    <section class="panel">
+      <h2>Totais por segmento, série e turma</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Segmento</th><th>Série</th><th>Turma</th><th>Total</th></tr></thead>
+          <tbody id="dashboardRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Resumo por categoria</h2>
+      <div id="categoryBars" class="bars"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="app.js"></script>
+</body>
+</html>

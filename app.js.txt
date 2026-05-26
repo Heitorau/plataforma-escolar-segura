@@ -1,0 +1,323 @@
+/* Plataforma Escolar Segura - frontend público
+   1) Publique o Code.gs como Web App.
+   2) Cole a URL /exec abaixo.
+   3) Nunca coloque ID da planilha ou segredos neste arquivo.
+*/
+
+const API_URL = "https://script.google.com/macros/s/AKfycbybLDXvqMZIp7QBd-EYAhaIlK3yFjgBUkTSzrmiGNYkci7kujy8-pyiigxgZqZa3nOu/exec";
+
+const state = {
+  session: localStorage.getItem("pes_session") || "",
+  role: localStorage.getItem("pes_role") || "",
+  user: localStorage.getItem("pes_user") || "",
+  records: []
+};
+
+const $ = (s) => document.querySelector(s);
+
+const esc = (v) =>
+  String(v ?? "").replace(/[&<>"']/g, (m) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  }[m]));
+
+const toast = (msg) => {
+  const el = $("#toast");
+
+  if (!el) {
+    alert(msg);
+    return;
+  }
+
+  el.textContent = msg;
+  el.classList.add("show");
+
+  setTimeout(() => {
+    el.classList.remove("show");
+  }, 3200);
+};
+
+function api(action, data = {}) {
+  if (!API_URL || API_URL.includes("COLE_AQUI")) {
+    return Promise.reject(
+      new Error("Configure a API_URL no app.js com a URL /exec do Apps Script.")
+    );
+  }
+
+  const cbName = "cb_" + Math.random().toString(36).slice(2);
+
+  const params = new URLSearchParams({
+    action,
+    payload: JSON.stringify(data),
+    callback: cbName,
+    session: state.session || ""
+  });
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("Tempo esgotado ao chamar a API."));
+    }, 20000);
+
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      script.remove();
+    }
+
+    window[cbName] = (res) => {
+      cleanup();
+
+      if (!res || res.ok === false) {
+        reject(new Error(res?.error || "Erro desconhecido."));
+      } else {
+        resolve(res.data);
+      }
+    };
+
+    script.src = `${API_URL}?${params.toString()}`;
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("Falha de rede/API."));
+    };
+
+    document.body.appendChild(script);
+  });
+}
+
+async function loadDashboard() {
+  try {
+    const data = await api("publicDashboard");
+
+    $("#kpiTotal").textContent = data.totalAtivo || 0;
+    $("#kpiSegmentos").textContent = data.segmentos || 0;
+    $("#kpiTurmas").textContent = data.turmas || 0;
+    $("#kpiUpdated").textContent = data.updatedAt
+      ? new Date(data.updatedAt).toLocaleDateString("pt-BR")
+      : "--";
+
+    const rows = data.byClass || [];
+
+    $("#dashboardRows").innerHTML = rows.length
+      ? rows.map((r) => `
+        <tr>
+          <td>${esc(r.segmento)}</td>
+          <td>${esc(r.serie)}</td>
+          <td>${esc(r.turma)}</td>
+          <td><b>${esc(r.total)}</b></td>
+        </tr>
+      `).join("")
+      : `<tr>
+          <td colspan="4">
+            Nenhum dado agregado encontrado. Clique em atualizar dados no painel admin.
+          </td>
+        </tr>`;
+
+    const cats = data.byCategory || [];
+    const max = Math.max(1, ...cats.map((c) => Number(c.total || 0)));
+
+    $("#categoryBars").innerHTML = cats.length
+      ? cats.map((c) => `
+        <div class="bar">
+          <strong>${esc(c.categoria)}</strong>
+          <div class="bar-track">
+            <div class="bar-fill" style="width:${(Number(c.total || 0) / max) * 100}%"></div>
+          </div>
+          <span>${esc(c.total)}</span>
+        </div>
+      `).join("")
+      : `<p class="muted">Sem categorias no cache público.</p>`;
+
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function login() {
+  try {
+    const username = $("#loginUser").value.trim();
+    const password = $("#loginPass").value;
+
+    const res = await api("login", {
+      username,
+      password
+    });
+
+    state.session = res.session;
+    state.role = res.role;
+    state.user = res.username;
+
+    localStorage.setItem("pes_session", state.session);
+    localStorage.setItem("pes_role", state.role);
+    localStorage.setItem("pes_user", state.user);
+
+    showAdmin();
+    toast("Login realizado.");
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+function logout() {
+  localStorage.removeItem("pes_session");
+  localStorage.removeItem("pes_role");
+  localStorage.removeItem("pes_user");
+
+  state.session = "";
+  state.role = "";
+  state.user = "";
+
+  $("#adminPanel").classList.add("hidden");
+  $("#loginBox").classList.remove("hidden");
+}
+
+function showAdmin() {
+  if (!state.session) return;
+
+  $("#loginBox").classList.add("hidden");
+  $("#adminPanel").classList.remove("hidden");
+
+  $("#sessionInfo").textContent = `Usuário: ${state.user} | Perfil: ${state.role}`;
+
+  loadRecords();
+}
+
+function formData(form) {
+  return Object.fromEntries(new FormData(form).entries());
+}
+
+async function submitAction(form, action) {
+  try {
+    await api(action, formData(form));
+
+    form.reset();
+
+    toast("Salvo com segurança.");
+
+    await loadRecords();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function refreshCache() {
+  try {
+    await api("refreshCache");
+    toast("Cache público atualizado.");
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function loadRecords() {
+  try {
+    const filters = {
+      segmento: $("#filterSegmento")?.value || "",
+      serie: $("#filterSerie")?.value || "",
+      turma: $("#filterTurma")?.value || "",
+      status_acompanhamento: $("#filterStatus")?.value || ""
+    };
+
+    state.records = await api("listRecords", filters);
+
+    renderRecords();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+function renderRecords() {
+  const tbody = $("#recordRows");
+
+  if (!tbody) return;
+
+  tbody.innerHTML = state.records.length
+    ? state.records.map((r) => `
+      <tr>
+        <td>${esc(r.id_registro)}</td>
+        <td>${esc(r.segmento)}</td>
+        <td>${esc(r.serie)}</td>
+        <td>${esc(r.turma)}</td>
+        <td>${esc(r.categoria_suporte)}</td>
+        <td><span class="pill">${esc(r.nivel_suporte)}</span></td>
+        <td>${esc(r.status_acompanhamento)}</td>
+        <td>
+          <button class="btn danger" onclick="deleteRecord('${esc(r.id_registro)}')">
+            Excluir
+          </button>
+        </td>
+      </tr>
+    `).join("")
+    : `<tr>
+        <td colspan="8">Nenhum registro encontrado.</td>
+      </tr>`;
+}
+
+async function deleteRecord(id) {
+  if (!confirm("Excluir logicamente este registro fictício?")) return;
+
+  try {
+    await api("deleteRecord", {
+      id_registro: id
+    });
+
+    toast("Registro marcado como inativo.");
+
+    await loadRecords();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.body.dataset.page === "dashboard") {
+    loadDashboard();
+
+    $("#refreshDashboardBtn")?.addEventListener("click", loadDashboard);
+  }
+
+  if (document.body.dataset.page === "admin") {
+    $("#loginBtn")?.addEventListener("click", login);
+    $("#logoutBtn")?.addEventListener("click", logout);
+
+    $("#classForm")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitAction(e.target, "createClass");
+    });
+
+    $("#userForm")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitAction(e.target, "createUser");
+    });
+
+    $("#lookupForm")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitAction(e.target, "createLookup");
+    });
+
+    $("#recordForm")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitAction(e.target, "createRecord");
+    });
+
+    $("#refreshCacheBtn")?.addEventListener("click", refreshCache);
+    $("#reloadRecordsBtn")?.addEventListener("click", loadRecords);
+
+    [
+      "#filterSegmento",
+      "#filterSerie",
+      "#filterTurma",
+      "#filterStatus"
+    ].forEach((s) => {
+      $(s)?.addEventListener("input", loadRecords);
+    });
+
+    showAdmin();
+  }
+});

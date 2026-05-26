@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plataforma Escolar Segura</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">🛡️</span><strong>Plataforma Escolar Segura</strong></div>
+    <nav>
+      <a href="index.html">Início</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+  </header>
+
+  <main class="hero">
+    <section class="hero-card">
+      <p class="tag">Protótipo educacional com dados 100% fictícios</p>
+      <h1>Acompanhamento educacional seguro, organizado e sem dados pessoais.</h1>
+      <p>
+        Sistema modelo usando GitHub Pages, Google Apps Script e Google Planilhas,
+        com controle de perfil, logs de auditoria, exclusão lógica e dashboard público
+        apenas com indicadores agregados.
+      </p>
+      <div class="actions">
+        <a class="btn primary" href="dashboard.html">Ver dashboard</a>
+        <a class="btn" href="admin.html">Área do coordenador</a>
+      </div>
+    </section>
+
+    <section class="grid cards">
+      <article><h3>Privacidade</h3><p>Não use nomes reais, fotos, laudos, CID, dados médicos ou familiares.</p></article>
+      <article><h3>Segurança</h3><p>O frontend nunca acessa a planilha diretamente. Tudo passa pelo Apps Script.</p></article>
+      <article><h3>Auditoria</h3><p>Criações, edições, exclusões lógicas e atualizações do cache são registradas.</p></article>
+      <article><h3>Dashboard</h3><p>Exibe somente totais e indicadores agregados por segmento, série e turma.</p></article>
+    </section>
+  </main>
+
+  <footer>Projeto escolar fictício. Não inserir dados reais.</footer>
+  <script src="app.js"></script>
+</body>
+</html>
